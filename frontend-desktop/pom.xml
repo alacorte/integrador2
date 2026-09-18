@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>br.com.integrador2</groupId>
+    <artifactId>integrador2</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>frontend-desktop</artifactId>
+  <packaging>jar</packaging>
+
+  <name>frontend-desktop</name>
+  <description>
+    Frontend desktop (Swing e JavaFX), Java 8, consumindo model-commons.
+    IMPORTANTE: JavaFX nao esta disponivel como artefato Maven para Java 8
+    (os artefatos org.openjfx:javafx-* exigem Java 11+). Para rodar as telas
+    JavaFX deste modulo e necessaria uma distribuicao de JDK 8 que inclua o
+    JavaFX no runtime, por exemplo Azul Zulu 8 FX, BellSoft Liberica Full JDK 8
+    ou Oracle JDK 8u. O Swing funciona em qualquer JDK 8 sem dependencia extra.
+  </description>
+
+  <dependencies>
+    <dependency>
+      <groupId>br.com.integrador2</groupId>
+      <artifactId>model-commons</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <!-- Por padrao o pacote javafx.* fica fora do build, pois exige um JDK 8
+           com JavaFX embutido (ver descricao acima). Ativar com -Pjavafx numa
+           JDK que o tenha. -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <excludes>
+            <exclude>br/com/integrador2/frontend/javafx/**</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>javafx</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-compiler-plugin</artifactId>
+            <configuration>
+              <excludes combine.self="override" />
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+</project>
