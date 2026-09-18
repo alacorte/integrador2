@@ -1,0 +1,21 @@
+spring:
+  activemq:
+    broker-url: vm://orquestrador-teste?broker.persistent=false&broker.useJmx=false
+
+  datasource:
+    url: jdbc:h2:mem:orquestrador;DB_CLOSE_DELAY=-1;MODE=MySQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    open-in-view: false
+
+  flyway:
+    enabled: false
+
+orquestrador:
+  prazo-consolidacao: PT2S
+  intervalo-publicacao-ms: 500

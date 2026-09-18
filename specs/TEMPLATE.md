@@ -8,7 +8,9 @@ O que entra nesta feature. O que fica de fora (não faz parte deste ciclo).
 
 ## Módulo(s) afetado(s)
 - [ ] model-commons
-- [ ] backend-springboot
+- [ ] integrador
+- [ ] orquestrador
+- [ ] parametrizador
 - [ ] frontend-desktop
 
 ## Entidades / contratos

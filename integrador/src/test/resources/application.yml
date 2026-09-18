@@ -1,0 +1,14 @@
+spring:
+  activemq:
+    broker-url: vm://interno-teste?broker.persistent=false&broker.useJmx=false
+
+integrador:
+  broker-externo:
+    # Broker separado do interno tambem no teste: se os dois fossem o mesmo, a
+    # fronteira que o teste deveria exercitar nao existiria de verdade.
+    url: vm://externo-teste?broker.persistent=false&broker.useJmx=false
+
+  rotas:
+    PEDIDO:
+      fila-entrada: DEV.QUEUE.PEDIDO.IN
+      fila-resposta: DEV.QUEUE.PEDIDO.OUT

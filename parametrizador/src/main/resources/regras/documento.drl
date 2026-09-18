@@ -1,0 +1,21 @@
+package regras;
+
+import br.com.integrador2.parametrizador.regras.FatoDocumento;
+
+// Regras de exemplo da fatia 1. A fatia de regras dinamicas substitui este
+// arquivo por conteudo vindo do banco, editavel pela tela desktop.
+
+rule "pedido de valor alto exige aprovacao manual"
+    when
+        $f : FatoDocumento(tipoDocumento == "PEDIDO", ((Number) campos["valor"]).doubleValue() > 1000)
+    then
+        $f.setDecisao("APROVACAO_MANUAL");
+        $f.setObservacao("Valor acima do limite automatico");
+end
+
+rule "pedido dentro do limite e aprovado automaticamente"
+    when
+        $f : FatoDocumento(tipoDocumento == "PEDIDO", ((Number) campos["valor"]).doubleValue() <= 1000)
+    then
+        $f.setDecisao("APROVADO_AUTOMATICO");
+end

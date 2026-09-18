@@ -1,0 +1,47 @@
+# Infraestrutura da fatia 1. Os processos Java ficam de fora de proposito:
+# enquanto o codigo esta em construcao, roda-los via `mvn spring-boot:run` evita
+# o ciclo de rebuild de imagem a cada alteracao. Empacota-los e uma fatia posterior.
+#
+#   podman-compose up -d     (ou: docker compose up -d)
+#
+services:
+  mysql:
+    image: mysql:8.0.40
+    container_name: integrador2-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: integrador2
+      MYSQL_PASSWORD: integrador2
+    ports:
+      - "3306:3306"
+    volumes:
+      # Cria os dois schemas separados: cada servico e dono do seu, com a sua
+      # propria tabela de historico do Flyway. Compartilhar um schema so faria
+      # o segundo servico a subir falhar na validacao das migrations.
+      - ./infra/mysql-init:/docker-entrypoint-initdb.d:ro
+      - mysql-dados:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  activemq:
+    # A imagem oficial nao publica tags 5.16.x (a mais antiga e 5.17.6), e
+    # `latest` hoje e 6.x — outra geracao. Fica fixada na 5.17.7: os clientes
+    # continuam no 5.16.7 que o Spring Boot 2.7 gerencia, porque o 5.17+ exige
+    # Java 11 e este projeto e Java 8. Cliente 5.16 e broker 5.17 conversam por
+    # OpenWire dentro da mesma linha 5.x — confirmar no primeiro `up`.
+    image: apache/activemq-classic:5.17.7
+    container_name: integrador2-activemq
+    ports:
+      - "61616:61616"  # OpenWire: o barramento entre os processos
+      - "8161:8161"    # console web (admin/admin): util para ver fila parada e DLQ
+    healthcheck:
+      test: ["CMD-SHELL", "netstat -an | grep -q 61616"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  mysql-dados:

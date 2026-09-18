@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: integrador
+  profiles:
+    active: dev
+
+  activemq:
+    # Barramento interno, entre os processos.
+    broker-url: tcp://localhost:61616
+
+integrador:
+  broker-externo:
+    # Borda com os sistemas de origem. No perfil dev quem sobe esse broker e o
+    # proprio processo (BrokerExternoConfig); trocar pelo IBM MQ e trocar esta
+    # URL e o bean connectionFactoryExterna.
+    url: tcp://localhost:61617
+    conector: tcp://0.0.0.0:61617
+
+  rotas:
+    PEDIDO:
+      fila-entrada: DEV.QUEUE.PEDIDO.IN
+      fila-resposta: DEV.QUEUE.PEDIDO.OUT
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%X{correlationId:-sem-correlacao}] %logger{36} - %msg%n"

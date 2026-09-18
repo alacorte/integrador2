@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: orquestrador
+
+  activemq:
+    broker-url: tcp://localhost:61616
+
+  datasource:
+    url: jdbc:mysql://localhost:3306/orquestrador_db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    username: integrador2
+    password: integrador2
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+
+  flyway:
+    enabled: true
+
+orquestrador:
+  # Quanto o Orquestrador espera por todas as partes antes de consolidar com o que tiver.
+  prazo-consolidacao: PT30S
+  intervalo-publicacao-ms: 2000
+
+logging:
+  pattern:
+    console: "%d{HH:mm:ss.SSS} %-5level [%X{correlationId:-sem-correlacao}] %logger{36} - %msg%n"

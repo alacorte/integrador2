@@ -1,54 +1,87 @@
 # integrador2
 
-Monorepo Maven multi-modulo com tres projetos:
+Parametrizador de integração: documentos JSON chegam de sistemas de origem via
+IBM MQ, passam por um motor de regras (Drools) e a resposta consolidada volta
+para a fila de resposta do tipo de documento.
 
-| Modulo | Java | Descricao |
+Os processadores rodam em **processos separados**, ligados por um barramento
+ActiveMQ — hoje só o Parametrizador, e uma análise por Machine Learning entra
+como segundo processador sem mudar a mecânica de consolidação.
+
+## Arquitetura
+
+```
+[IBM MQ externo] --> Integrador --> documentos-recebidos --> Orquestrador
+                                                                  |
+                                                    documentos-para-parametrizador
+                                                                  |
+                                                                  v
+                                                           Parametrizador (Drools)
+                                                                  |
+                                                          respostas-parciais
+                                                                  |
+                                                                  v
+                                                     Orquestrador (consolida)
+                                                                  |
+                                                          respostas-finais
+                                                                  |
+                                                                  v
+                             Integrador --> [IBM MQ externo, fila de resposta do tipo]
+```
+
+O Orquestrador aplica o padrão **Scatter-Gather / Aggregator**: espalha o
+documento, espera as respostas parciais correlacionadas e consolida quando
+todas chegam — ou quando o prazo estoura, seguindo com o que tiver.
+
+## Módulos
+
+| Módulo | Processo próprio | Descrição |
 |---|---|---|
-| `model-commons` | 8 | Entidades de dominio e utilitarios compartilhados. Consumido pelos outros dois modulos. |
-| `backend-springboot` | 8 (Spring Boot 2.7 LTS) | API REST. |
-| `frontend-desktop` | 8 | Interface desktop com Swing e JavaFX. |
+| `model-commons` | não | Entidades JPA, contratos de mensagem e utilitários compartilhados |
+| `integrador` | sim | Ponte entre o IBM MQ (origem) e o barramento interno |
+| `orquestrador` | sim | Espalha, consolida com timeout e devolve a resposta final |
+| `parametrizador` | sim | Motor de regras Drools + histórico de execuções |
+| `frontend-desktop` | não | Telas Swing de administração (fatia 2), JDBC direto no MySQL |
 
-## Build
+Todos em **Java 8**. Os serviços usam Spring Boot 2.7 (última linha que suporta
+Java 8) e Drools 7.74.1 (última linha que suporta Java 8).
+
+## Como rodar
+
+Infraestrutura (MySQL com os dois schemas + ActiveMQ):
 
 ```bash
-mvn -q -DskipTests install   # builda todos os modulos, na ordem correta de dependencia
-mvn -q test                  # roda os testes de todos os modulos
+podman-compose up -d      # ou: docker compose up -d
 ```
 
-Para rodar um modulo especifico:
+Cada serviço em um terminal:
 
 ```bash
-mvn -pl backend-springboot -am spring-boot:run
-mvn -pl frontend-desktop -am exec:java -Dexec.mainClass=br.com.integrador2.frontend.swing.SwingApp
+mvn -pl parametrizador -am spring-boot:run
+mvn -pl orquestrador   -am spring-boot:run
+mvn -pl integrador     -am spring-boot:run
 ```
 
-### JavaFX
+O Integrador sobe, em perfil `dev`, um broker embutido na porta **61617** que
+faz o papel do IBM MQ. Para enviar um documento de teste, publique na fila
+`DEV.QUEUE.PEDIDO.IN` desse broker; a resposta sai em `DEV.QUEUE.PEDIDO.OUT`.
 
-O modulo `frontend-desktop` inclui uma tela Swing e uma tela JavaFX de exemplo.
-JavaFX nao tem artefato Maven compativel com Java 8 (os artefatos
-`org.openjfx:javafx-*` exigem Java 11+), entao rodar `FxApp` requer uma
-distribuicao de JDK 8 que embuta o JavaFX no runtime, por exemplo:
+Testes (não precisam de infraestrutura — usam broker em memória e H2):
 
-- Azul Zulu 8 FX
-- BellSoft Liberica Full JDK 8
-- Oracle JDK 8u (licenca proprietaria)
+```bash
+mvn test
+```
 
-O Swing (`SwingApp`) roda em qualquer JDK 8 sem nenhuma dependencia extra.
+### Atenção ao JDK
 
-## Spec-Driven Development
+O Drools 7.x **não roda em JDK 21**: o MVEL que ele usa referencia
+`java.lang.Compiler`, removida nessa versão. O projeto fixa `mvel2 2.5.4.Final`
+(também bytecode Java 8) justamente para destravar isso — mas o alvo real
+continua sendo o **JDK 8**.
 
-Fluxo leve, usando o Plan Mode nativo do Claude Code + specs em Markdown:
+## Desenvolvimento
 
-1. Escrever a spec da feature em `specs/<nome-da-feature>.md`, a partir do
-   template em `specs/TEMPLATE.md` (objetivo, escopo, entidades/contratos,
-   regras de negocio, criterios de aceite).
-2. No Claude Code, pedir para entrar em **Plan Mode** e ler a spec (ex: "leia
-   specs/cadastro-produto.md e entre em plan mode"). O Claude explora o
-   codigo existente e propoe um plano de implementacao passo a passo.
-3. Revisar/ajustar o plano antes de aprovar.
-4. Aprovar o plano; a implementacao acontece so depois disso.
-
-Sem CLI externo, sem artefatos obrigatorios alem da propria spec. E o ponto
-de partida recomendado para quem esta comecando com Claude Code; um fluxo
-mais formal (tipo spec-kit) pode fazer sentido depois, se o processo exigir
-mais rigor entre spec/plano/tarefas.
+O projeto é desenvolvido por fatias verticais, com specs em Markdown
+(`specs/`) e o Plan Mode do Claude Code: a spec descreve o objetivo e os
+critérios de aceite, o plano de implementação é revisado antes de virar
+código.

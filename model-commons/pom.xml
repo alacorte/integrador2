@@ -14,9 +14,17 @@
   <packaging>jar</packaging>
 
   <name>model-commons</name>
-  <description>Entidades de dominio (model) e utilitarios compartilhados (commons), consumidos pelo backend e pelo frontend</description>
+  <description>Entidades de dominio (JPA), contratos de mensagem e utilitarios compartilhados entre os servicos</description>
 
   <dependencies>
+    <!-- Só as anotações JPA. O runtime (Hibernate) vem de quem realmente persiste.
+         Coordenada jakarta.persistence (não javax.persistence): é a que o
+         spring-boot-starter-data-jpa 2.7 usa; o pacote Java continua javax.persistence.*. -->
+    <dependency>
+      <groupId>jakarta.persistence</groupId>
+      <artifactId>jakarta.persistence-api</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>
