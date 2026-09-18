@@ -1,20 +1,20 @@
 package br.com.integrador2.commons;
 
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import br.com.integrador2.commons.util.Preconditions;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
-public class PreconditionsTest {
+class PreconditionsTest {
 
     @Test
-    public void checkNotNullThrowsOnNull() {
+    void checkNotNullThrowsOnNull() {
         assertThrows(IllegalArgumentException.class,
                 () -> Preconditions.checkNotNull(null, "value is required"));
     }
 
     @Test
-    public void checkArgumentThrowsWhenFalse() {
+    void checkArgumentThrowsWhenFalse() {
         assertThrows(IllegalArgumentException.class,
                 () -> Preconditions.checkArgument(false, "condition must hold"));
     }
